@@ -1,0 +1,330 @@
+import pandas as pd
+from IPython.display import display
+import re
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import matplotlib.mlab as mlab
+from scipy.stats import norm
+from tabulate import tabulate
+import math
+from scipy.stats import norm
+import statistics
+
+#############################################################################################################################################################################
+
+#Cleaning up and extracting the relevant price-time data for bitcoin
+
+data = pd.read_csv('C:/Users/SPNMo/.spyder-py3/Final CSV Assignment 2.csv',delimiter=',', skiprows=0, low_memory=False, sep='\t',index_col=False)
+
+pd.options.display.max_rows = 5000
+data = data.iloc[399:]
+data = data.reset_index(drop=True)
+bitcoin_list = [0, 0.01, 0.025, 0.05, 0.1]
+
+for bitcoin in bitcoin_list:
+    adjusted_returns_list = []
+        
+    for returns in data.itertuples():
+                return_adjustment = (((1-bitcoin)*returns.fundreturn) + (bitcoin*returns.bitcoinreturn))
+                adjusted_returns_list.append(return_adjustment)
+                
+    data[f'Returns With {bitcoin*100} % Bitcoin Exposure'] = adjusted_returns_list 
+    
+CalculateVaR(data)
+DisplayLosses(data)
+
+#############################################################################################################################################################################
+
+#In order to use the power law tail VaR method, we have to transform the data so that we can order the losses from largest (most positive) to smallest (most negative)
+
+def DisplayLosses(data):
+    
+    data['Returns With 0 % Bitcoin Exposure'] = data['Returns With 0 % Bitcoin Exposure']*-1
+    data['Returns With 1.0 % Bitcoin Exposure'] = data['Returns With 1.0 % Bitcoin Exposure']*-1
+    data['Returns With 2.5 % Bitcoin Exposure'] = data['Returns With 2.5 % Bitcoin Exposure']*-1
+    data['Returns With 5.0 % Bitcoin Exposure'] = data['Returns With 5.0 % Bitcoin Exposure']*-1
+    data['Returns With 10.0 % Bitcoin Exposure'] = data['Returns With 10.0 % Bitcoin Exposure']*-1
+
+    new_data = data.iloc[: ,[0, 3, 4, 5, 6, 7]].copy()
+
+    for columns in new_data:
+        new_data[columns] = new_data[columns].sort_values(ignore_index=True, ascending=False)
+        
+    display(new_data.head(7000))
+    k = int(1600*0.05)
+    CalculatePowerTailMethod(new_data, k)
+    
+#############################################################################################################################################################################
+
+#Here we calculate the VaR using the standard normal distribution
+
+def CalculateVaR(data):
+
+    mean_bitcoin_zero = np.mean(data['Returns With 0 % Bitcoin Exposure'])
+    std_bitcoin_zero = np.std(data['Returns With 0 % Bitcoin Exposure'])
+    VaR_95_zero = norm.ppf(1-0.95, mean_bitcoin_zero, std_bitcoin_zero)
+    
+    sns.set(style='darkgrid')
+    sns.distplot(data['Returns With 0 % Bitcoin Exposure'], hist=True, kde=True, bins=60, color='darkblue')
+    plt.xlabel('Returns With 0 % Bitcoin Exposure')
+    plt.ylabel('Frequency')
+    plt.title('Frequency Of Potfolio Returns With 0 % Bitcoin Exposure')
+    plt.show()
+    
+    sns.set_style('darkgrid')
+    data['date'] = pd.to_datetime(data['date'])
+    plt.scatter(data['date'], data['Returns With 0 % Bitcoin Exposure'], color='black', s=10, alpha=0.5)
+    plt.ylabel('Returns With 0 % Bitcoin Exposure')
+    plt.xlabel('Date')
+    plt.title('Returns With 0 % Bitcoin Exposure Over Time')
+    plt.show()
+    
+
+    mean_bitcoin_one = np.mean(data['Returns With 1.0 % Bitcoin Exposure'])
+    std_bitcoin_one = np.std(data['Returns With 1.0 % Bitcoin Exposure'])
+    VaR_95_one = norm.ppf(1-0.95, mean_bitcoin_one, std_bitcoin_one)
+
+    sns.set(style='darkgrid')
+    sns.distplot(data['Returns With 1.0 % Bitcoin Exposure'], hist=True, kde=True, bins=60, color='darkblue')
+    plt.xlabel('Returns With 1.0 % Bitcoin Exposure')
+    plt.ylabel('Frequency')
+    plt.title('Frequency Of Potfolio Returns With 1.0 % Bitcoin Exposure')
+    plt.show()
+    
+    sns.set_style('darkgrid')
+    data['date'] = pd.to_datetime(data['date'])
+    plt.scatter(data['date'], data['Returns With 1.0 % Bitcoin Exposure'], color='black', s=10, alpha=0.5)
+    plt.ylabel('Returns With 1.0 % Bitcoin Exposure')
+    plt.xlabel('Date')
+    plt.title('Returns With 1.0 % Bitcoin Exposure Over Time')
+    plt.show()
+    
+    
+    mean_bitcoin_two = np.mean(data['Returns With 2.5 % Bitcoin Exposure'])
+    std_bitcoin_two = np.std(data['Returns With 2.5 % Bitcoin Exposure'])
+    VaR_95_two = norm.ppf(1-0.95, mean_bitcoin_two, std_bitcoin_two)
+
+    sns.set(style='darkgrid')
+    sns.distplot(data['Returns With 2.5 % Bitcoin Exposure'], hist=True, kde=True, bins=60, color='darkblue')
+    plt.xlabel('Returns With 2.5 % Bitcoin Exposure')
+    plt.ylabel('Frequency')
+    plt.title('Frequency Of Potfolio Returns With 2.5 % Bitcoin Exposure')
+    plt.show()
+    
+    sns.set_style('darkgrid')
+    data['date'] = pd.to_datetime(data['date'])
+    plt.scatter(data['date'], data['Returns With 2.5 % Bitcoin Exposure'], color='black', s=10, alpha=0.5)
+    plt.ylabel('Returns With 2.5 % Bitcoin Exposure')
+    plt.xlabel('Date')
+    plt.title('Returns With 2.5 % Bitcoin Exposure Over Time')
+    plt.show()
+    
+    
+    mean_bitcoin_three = np.mean(data['Returns With 5.0 % Bitcoin Exposure'])
+    std_bitcoin_three = np.std(data['Returns With 5.0 % Bitcoin Exposure'])
+    VaR_95_three = norm.ppf(1-0.95, mean_bitcoin_three, std_bitcoin_three)
+
+    sns.set(style='darkgrid')
+    sns.distplot(data['Returns With 5.0 % Bitcoin Exposure'], hist=True, kde=True, bins=60, color='darkblue')
+    plt.xlabel('Returns With 5.0 % Bitcoin Exposure')
+    plt.ylabel('Frequency')
+    plt.title('Frequency Of Potfolio Returns With 5.0 % Bitcoin Exposure')
+    plt.show()
+    
+    sns.set_style('darkgrid')
+    data['date'] = pd.to_datetime(data['date'])
+    plt.scatter(data['date'], data['Returns With 5.0 % Bitcoin Exposure'], color='black', s=10, alpha=0.5)
+    plt.ylabel('Returns With 5.0 % Bitcoin Exposure')
+    plt.xlabel('Date')
+    plt.title('Returns With 5.0 % Bitcoin Exposure Over Time')
+    plt.show()
+    
+    
+    mean_bitcoin_four = np.mean(data['Returns With 10.0 % Bitcoin Exposure'])
+    std_bitcoin_four = np.std(data['Returns With 10.0 % Bitcoin Exposure'])
+    VaR_95_four = norm.ppf(1-0.95, mean_bitcoin_four, std_bitcoin_four)
+    
+    sns.set(style='darkgrid')
+    sns.distplot(data['Returns With 10.0 % Bitcoin Exposure'], hist=True, kde=True, bins=60, color='darkblue')
+    plt.xlabel('Returns With 10.0 % Bitcoin Exposure')
+    plt.ylabel('Frequency')
+    plt.title('Frequency Of Potfolio Returns With 10.0 % Bitcoin Exposure')
+    plt.show()
+    
+    sns.set_style('darkgrid')
+    data['date'] = pd.to_datetime(data['date'])
+    plt.scatter(data['date'], data['Returns With 10.0 % Bitcoin Exposure'], color='black', s=10, alpha=0.5)
+    plt.ylabel('Returns With 10.0 % Bitcoin Exposure')
+    plt.xlabel('Date')
+    plt.title('Returns With 10.0 % Bitcoin Exposure Over Time')
+    plt.show()
+
+    print (tabulate([['0%', std_bitcoin_zero], ['1%', std_bitcoin_one], ['2.5%', std_bitcoin_two], ['5%', std_bitcoin_three], ['10%', std_bitcoin_four]], headers=['% Bitcoin Exposure', 'Standard Deviation']))
+    print('\n')
+    print (tabulate([['95% (0% Bitcoin Exposure)', VaR_95_zero], ['95% (1% Bitcoin Exposure)', VaR_95_one], ['95% (2.5% Bitcoin Exposure)', VaR_95_two], ['95% (5% Bitcoin Exposure)', VaR_95_three], ['95% (10% Bitcoin Exposure)', VaR_95_four]], headers=['Normal Distribution VaR (95%)', '% Loss']))
+    print('\n')
+    
+ #############################################################################################################################################################################
+ 
+ #Here, we calculate the VaR using the power law tail method.
+ 
+ def CalculatePowerTailMethod(new_data, k):
+    
+    bitcoin_zero_list = new_data['Returns With 0 % Bitcoin Exposure'].tolist()
+    sum_bitcoin_zero_list = []
+
+    for i in range(0, 71):
+    
+        sum_bitcoin_zero_list.append(np.log(bitcoin_zero_list[i] / bitcoin_zero_list[k+1]))
+
+    total = sum(sum_bitcoin_zero_list)
+    alpha_hat_zero = 1 / ((1/k)*total)
+    c_hat_zero = (k / 1600)*((bitcoin_zero_list[k+1])**(alpha_hat_zero))     
+    VaR_zero = (c_hat_zero / 0.001)**(1/alpha_hat_zero)
+    
+    probability_zero_list = []
+    log_returns_zero_list = []
+    
+    for returns in bitcoin_zero_list:
+        
+        log_returns = np.log(returns)
+        log_returns_zero_list.append(log_returns)
+        log_probability = np.log(c_hat_zero*(returns**(-alpha_hat_zero)))
+        probability_zero_list.append(log_probability)
+    
+    plt.scatter(probability_zero_list, log_returns_zero_list, alpha=0.5, s=10)
+    plt.title('Log(Probability) Vs. Log(Loss) For 0 % Exposure To Bitcoin')
+    plt.ylabel('Log(Probability)')
+    plt.xlabel('Log(Loss)')
+    plt.show()
+        
+        
+    
+    bitcoin_one_list = new_data['Returns With 1.0 % Bitcoin Exposure'].tolist()
+    sum_bitcoin_one_list = []
+
+    for i in range(0, 71):
+    
+        sum_bitcoin_one_list.append(np.log(bitcoin_one_list[i] / bitcoin_one_list[k+1]))
+     
+    total = sum(sum_bitcoin_one_list)
+    alpha_hat_one = 1 / ((1/k)*total)
+    c_hat_one = (k / 1600)*((bitcoin_one_list[k+1])**(alpha_hat_one))     
+    VaR_one = (c_hat_one / 0.001)**(1/alpha_hat_one)
+
+    probability_one_list = []
+    log_returns_one_list = []
+    
+    for returns in bitcoin_one_list:
+        
+        log_returns = np.log(returns)
+        log_returns_one_list.append(log_returns)
+        log_probability = np.log(c_hat_one*(returns**(-alpha_hat_one)))
+        probability_one_list.append(log_probability)
+    
+    plt.scatter(probability_one_list, log_returns_one_list, alpha=0.5, s=10)
+    plt.title('Log(Probability) Vs. Log(Loss) For 1.0 % Exposure To Bitcoin')
+    plt.ylabel('Log(Probability)')
+    plt.xlabel('Log(Loss)')
+    plt.show()
+    
+    
+
+    bitcoin_two_list = new_data['Returns With 2.5 % Bitcoin Exposure'].tolist()
+    sum_bitcoin_two_list = []
+
+    for i in range(0, 71):
+    
+        sum_bitcoin_two_list.append(np.log(bitcoin_two_list[i] / bitcoin_two_list[k+1]))
+    
+    total = sum(sum_bitcoin_two_list)
+    alpha_hat_two = 1 / ((1/k)*total)
+    c_hat_two = (k / 1600)*((bitcoin_two_list[k+1])**(alpha_hat_two))     
+    VaR_two = (c_hat_two / 0.001)**(1/alpha_hat_two)
+
+    probability_two_list = []
+    log_returns_two_list = []
+    
+    for returns in bitcoin_two_list:
+        
+        log_returns = np.log(returns)
+        log_returns_two_list.append(log_returns)
+        log_probability = np.log(c_hat_two*(returns**(-alpha_hat_two)))
+        probability_two_list.append(log_probability)
+    
+    plt.scatter(probability_two_list, log_returns_two_list, alpha=0.5, s=10)
+    plt.title('Log(Probability) Vs. Log(Loss) For 2.5 % Exposure To Bitcoin')
+    plt.ylabel('Log(Probability)')
+    plt.xlabel('Log(Loss)')
+    plt.show()
+    
+    
+
+    bitcoin_three_list = new_data['Returns With 5.0 % Bitcoin Exposure'].tolist()
+    sum_bitcoin_three_list = []
+
+    for i in range(0, 71):
+    
+        sum_bitcoin_three_list.append(np.log(bitcoin_three_list[i] / bitcoin_three_list[k+1]))
+     
+    total = sum(sum_bitcoin_three_list)
+    alpha_hat_three = 1 / ((1/k)*total)
+    c_hat_three = (k / 1600)*((bitcoin_three_list[k+1])**(alpha_hat_three))     
+    VaR_three = (c_hat_three / 0.001)**(1/alpha_hat_three)
+
+
+    probability_three_list = []
+    log_returns_three_list = []
+    
+    for returns in bitcoin_three_list:
+        
+        log_returns = np.log(returns)
+        log_returns_three_list.append(log_returns)
+        log_probability = np.log(c_hat_three*(returns**(-alpha_hat_three)))
+        probability_three_list.append(log_probability)
+    
+    plt.scatter(probability_three_list, log_returns_three_list, alpha=0.5, s=10)
+    plt.title('Log(Probability) Vs. Log(Loss) For 5.0 % Exposure To Bitcoin')
+    plt.ylabel('Log(Probability)')
+    plt.xlabel('Log(Loss)')
+    plt.show()
+    
+    
+    
+    bitcoin_four_list = new_data['Returns With 10.0 % Bitcoin Exposure'].tolist()
+    sum_bitcoin_four_list = []
+
+    for i in range(0, 71):
+    
+        sum_bitcoin_four_list.append(np.log(bitcoin_four_list[i] / bitcoin_four_list[k+1]))
+  
+    total = sum(sum_bitcoin_four_list)
+    alpha_hat_four = 1 / ((1/k)*total)
+    c_hat_four = (k / 1600)*((bitcoin_four_list[k+1])**(alpha_hat_four))     
+    VaR_four = (c_hat_four / 0.001)**(1/alpha_hat_four)
+
+    probability_four_list = []
+    log_returns_four_list = []
+    
+    for returns in bitcoin_four_list:
+        
+        log_returns = np.log(returns)
+        log_returns_four_list.append(log_returns)
+        log_probability = np.log(c_hat_four*(returns**(-alpha_hat_four)))
+        probability_four_list.append(log_probability)
+    
+    plt.scatter(probability_four_list, log_returns_four_list, alpha=0.5, s=10)
+    plt.title('Log(Probability) Vs. Log(Loss) For 10.0 % Exposure To Bitcoin')
+    plt.ylabel('Log(Probability)')
+    plt.xlabel('Log(Loss)')
+    plt.show()
+    
+    
+    print (tabulate([['alpha_hat_zero (0% Bitcoin Exposure)', alpha_hat_zero], ['alpha_hat_one (1.0% Bitcoin Exposure)', alpha_hat_one], ['alpha_hat_two (2.5% Bitcoin Exposure)', alpha_hat_two], ['alpha_hat_three (5.0% Bitcoin Exposure)', alpha_hat_three], ['alpha_hat_four (10.0% Bitcoin Exposure)', alpha_hat_four]], headers=['alpha_hat', 'value']))
+    print('\n')
+    print (tabulate([['c_hat_zero (0% Bitcoin Exposure)', c_hat_zero], ['c_hat_one (1.0% Bitcoin Exposure)', c_hat_one], ['c_hat_two (2.5% Bitcoin Exposure)', c_hat_two], ['c_hat_three (5.0% Bitcoin Exposure)', c_hat_three], ['c_hat_four (10.0% Bitcoin Exposure)', c_hat_four]], headers=['c_hat', 'value']))
+    print('\n')
+    print (tabulate([['VaR_zero (0% Bitcoin Exposure)', VaR_zero], ['VaR_one (1.0% Bitcoin Exposure)', VaR_one], ['VaR_two (2.5% Bitcoin Exposure)', VaR_two], ['VaR_three (5.0% Bitcoin)', VaR_three], ['VaR_four (10.0% Bitcoin Exposure)', VaR_four]], headers=['Power Tail Method VaR (99.5%)', '% Loss']))
+
+#############################################################################################################################################################################
