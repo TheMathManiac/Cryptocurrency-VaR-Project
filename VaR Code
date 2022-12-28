@@ -13,7 +13,7 @@ import statistics
 
 #############################################################################################################################################################################
 
-#Cleaning up and extracting the relevant price-time data for bitcoin
+#Cleaning up and extracting the relevant gains, losses and time data for bitcoin and the companies investment portfolio from a raw CSV file
 
 data = pd.read_csv('C:/Users/SPNMo/.spyder-py3/Final CSV Assignment 2.csv',delimiter=',', skiprows=0, low_memory=False, sep='\t',index_col=False)
 
@@ -36,7 +36,7 @@ DisplayLosses(data)
 
 #############################################################################################################################################################################
 
-#In order to use the power law tail VaR method, we have to transform the data so that we can order the losses from largest (most positive) to smallest (most negative)
+#In order to use the power law tail 1-Day VaR method, we have to transform the gains and losses data so that we can order the losses from largest (most positive) to smallest (most negative).
 
 def DisplayLosses(data):
     
@@ -57,7 +57,7 @@ def DisplayLosses(data):
     
 #############################################################################################################################################################################
 
-#Here we calculate the VaR using the standard normal distribution
+#Here we calculate the 1-Day VaR using the standard normal distribution
 
 def CalculateVaR(data):
 
@@ -167,7 +167,7 @@ def CalculateVaR(data):
     
  #############################################################################################################################################################################
  
- #Here, we calculate the VaR using the power law tail method.
+ #Here, we calculate the 1-Day VaR using the power law tail method.
  
  def CalculatePowerTailMethod(new_data, k):
     
